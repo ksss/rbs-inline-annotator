@@ -1,0 +1,13 @@
+AllCops:
+  TargetRubyVersion: 3.2
+
+Style:
+  Enabled: false
+Metrics:
+  Enabled: false
+Layout/HeredocIndentation:
+  Enabled: false
+Layout/LeadingCommentSpace:
+  AllowRBSInlineAnnotation: true
+Naming/MethodParameterName:
+  Enabled: false
