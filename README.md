@@ -1,5 +1,7 @@
 # RBS::Inline::Annotator
 
+Add rbs-inline annotation to ruby code by rbs code.
+
 ```rb
 # lib/foo.rb
 class Foo
@@ -9,7 +11,7 @@ class Foo
 end
 ```
 
-+
+\+
 
 ```rbs
 # sig/foo.rbs
@@ -18,7 +20,7 @@ class Foo
 end
 ```
 
-`$ bundle exec rbs-inline-annotator -I sig lib`
+=
 
 ```rb
 # lib/foo.rb
@@ -49,7 +51,17 @@ gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
 
 ## Usage
 
-TODO: Write usage instructions here
+### Add rbs-inline annotation to ruby file
+
+```shell
+$ bundle exec rbs-inline-annotator -I sig target_dir_or_file
+```
+
+### Print result code to stdout only
+
+```shell
+$ bundle exec rbs-inline-annotator -I sig --mode print-only target_dir_or_file
+```
 
 ## Development
 
