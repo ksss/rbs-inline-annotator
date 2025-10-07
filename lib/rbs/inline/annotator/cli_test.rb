@@ -325,6 +325,39 @@ module CLITest
     end
   end
 
+  def test_emoji(t)
+    Dir.mktmpdir do |dir|
+      dir = Pathname(dir)
+      target = dir / "sample.rb"
+      target.write(<<~RUBY)
+        class Foo
+          # ☕️
+          def bar
+          end
+        end
+      RUBY
+      (dir / "sample.rbs").write(<<~RBS)
+        class Foo
+          def bar: () -> void
+        end
+      RBS
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli.run
+
+      expected = <<~RUBY
+        class Foo
+          # ☕️
+          # @rbs return: void
+          def bar
+          end
+        end
+      RUBY
+      unless target.read == expected
+        t.error("target expected: \n```\n#{expected}```\n, but got:\n```\n#{target.read}```\n")
+      end
+    end
+  end
+
   def test_write(t)
     Dir.mktmpdir do |dir|
       dir = Pathname(dir)

@@ -26,8 +26,8 @@ module RBS::Inline::Annotator
 
     def node_range(node)
       Range.new(
-        node.location.start_offset,
-        node.location.end_offset,
+        node.location.start_character_offset,
+        node.location.end_character_offset,
       )
     end
 
