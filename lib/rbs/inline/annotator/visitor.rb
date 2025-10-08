@@ -392,16 +392,59 @@ module RBS::Inline::Annotator
       end
     end
 
+    def visit_constant_path_write_node(node)
+      constant_type_name = RBS::TypeName.parse(node.target.full_name).then do |c|
+        type_name ? type_name + c : c.absolute!
+      end
+      type = constant_type(node, constant_type_name) or return
+      add_rbs_inline_annotation_for_trailing(node:, type:)
+    end
+
     def visit_constant_write_node(node)
+      namespace = type_name ? type_name.to_namespace : RBS::Namespace.root
       constant_type_name = RBS::TypeName.new(
         name: node.name,
-        namespace: type_name.to_namespace
+        namespace:
       )
-      entry = @env.constant_decls[constant_type_name] or return
-      type = entry.decl.type.to_s
-      return if type == "untyped"
-
+      type = constant_type(node, constant_type_name) or return
       add_rbs_inline_annotation_for_trailing(node:, type:)
+    end
+
+    def constant_type(node, type_name)
+      entry = @env.constant_entry(type_name) or return
+      case entry
+      when RBS::Environment::ModuleAliasEntry
+        case node.value
+        when Prism::CallNode
+          "module-alias #{entry.decl.old_name}"
+        when Prism::ConstantReadNode, Prism::ConstantPathNode
+          "module-alias"
+        else
+          warn "Unsupported node: #{node.value.class}"
+        end
+      when RBS::Environment::ClassAliasEntry
+        case node.value
+        when Prism::CallNode
+          "class-alias #{entry.decl.old_name}"
+        when Prism::ConstantReadNode, Prism::ConstantPathNode
+          "class-alias"
+        else
+          warn "Unsupported node: #{node.value.class}"
+        end
+      when RBS::Environment::ConstantEntry
+        t = entry.decl.type.to_s
+        if (node.value.is_a?(Prism::IntegerNode) && t == "Integer" ||
+            node.value.is_a?(Prism::FloatNode) && t == "Float" ||
+            node.value.is_a?(Prism::TrueNode) && t == "bool" ||
+            node.value.is_a?(Prism::FalseNode) && t == "bool" ||
+            node.value.is_a?(Prism::StringNode) && t == "String" ||
+            node.value.is_a?(Prism::SymbolNode) && t == ":#{node.value.value}")
+          # The types of constants may be automatically inferred
+          nil
+        else
+          t
+        end
+      end
     end
 
     def add_rbs_inline_annotation_for_trailing(node:, type:)
