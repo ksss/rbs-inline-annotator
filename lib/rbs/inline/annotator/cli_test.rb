@@ -10,13 +10,41 @@ module CLITest
         class Constants
           CONST = 1
           OBJECT = Object.new
+          module M
+          end
+          M::CONST = "const"
         end
+        TopLevel = Object.new
+        Constants::WritePath = Object.new
+        ::Constants::AbsWritePath = Object.new
+        ModuleAlias = Constants
+        ModuleAlias::Child = Constants::M
+        class C
+          class C2
+          end
+        end
+        ClassAlias = C
+        ClassAlias::Child = C::C2
       RUBY
       (dir / "target.rbs").write(<<~RBS)
         class Constants
           CONST: Integer
           OBJECT: Object
+          module M
+          end
+          M::CONST: String
         end
+        TopLevel: Object
+        Constants::WritePath: Object
+        ::Constants::AbsWritePath: Object
+        module ModuleAlias = Constants
+        module ModuleAlias::Child = Constants::M
+        class C
+          class C2
+          end
+        end
+        class ClassAlias = C
+        class ClassAlias::Child = C::C2
       RBS
       cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
       cli.run
@@ -25,7 +53,21 @@ module CLITest
         class Constants
           CONST = 1 #: Integer
           OBJECT = Object.new #: Object
+          module M
+          end
+          M::CONST = "const" #: String
         end
+        TopLevel = Object.new #: Object
+        Constants::WritePath = Object.new #: Object
+        ::Constants::AbsWritePath = Object.new #: Object
+        ModuleAlias = Constants #: module-alias
+        ModuleAlias::Child = Constants::M #: module-alias
+        class C
+          class C2
+          end
+        end
+        ClassAlias = C #: class-alias
+        ClassAlias::Child = C::C2 #: class-alias
       RUBY
       unless target.read == expected
         t.error("target expected: \n```\n#{expected}```\n, but got:\n```\n#{target.read}```\n")
