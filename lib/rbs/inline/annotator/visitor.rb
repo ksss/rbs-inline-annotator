@@ -252,13 +252,18 @@ module RBS::Inline::Annotator
           new_annotation.call("return", return_type)
         }
         if node.parameters
-          for_positional_params.call(func.required_positionals, node.parameters.requireds)
-          for_positional_params.call(func.optional_positionals, node.parameters.optionals)
-          for_rest_param.call("*", func.rest_positionals, node.parameters.rest) if func.rest_positionals
-          for_positional_params.call(func.trailing_positionals, node.parameters.posts) if func.trailing_positionals
-          for_keyword_params.call(func.required_keywords, node.parameters.keywords.grep(Prism::RequiredKeywordParameterNode))
-          for_keyword_params.call(func.optional_keywords, node.parameters.keywords.grep(Prism::OptionalKeywordParameterNode))
-          for_rest_param.call("**", func.rest_keywords, node.parameters.keyword_rest) if func.rest_keywords
+          case func
+          when RBS::Types::UntypedFunction
+            # do nothing
+          when RBS::Types::Function
+            for_positional_params.call(func.required_positionals, node.parameters.requireds)
+            for_positional_params.call(func.optional_positionals, node.parameters.optionals)
+            for_rest_param.call("*", func.rest_positionals, node.parameters.rest) if func.rest_positionals
+            for_positional_params.call(func.trailing_positionals, node.parameters.posts) if func.trailing_positionals
+            for_keyword_params.call(func.required_keywords, node.parameters.keywords.grep(Prism::RequiredKeywordParameterNode))
+            for_keyword_params.call(func.optional_keywords, node.parameters.keywords.grep(Prism::OptionalKeywordParameterNode))
+            for_rest_param.call("**", func.rest_keywords, node.parameters.keyword_rest) if func.rest_keywords
+          end
         end
         if method_type.block
           name = node.parameters&.block&.name

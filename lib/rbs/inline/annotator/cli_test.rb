@@ -91,6 +91,11 @@ module CLITest
           def bar(a = 0)
           end
 
+          def dot3(...)
+          end
+
+          def endless = 1
+
           def block
           end
 
@@ -116,6 +121,10 @@ module CLITest
 
           def bar: () -> Integer
                 | (Integer) -> Integer
+
+          def dot3: (?) -> Integer
+
+          def endless: () -> Integer
 
           def block: () ?{ (Integer) -> Integer } -> void
 
@@ -150,6 +159,13 @@ module CLITest
           #    | (Integer) -> Integer
           def bar(a = 0)
           end
+
+          # @rbs return: Integer
+          def dot3(...)
+          end
+
+          # @rbs return: Integer
+          def endless = 1
 
           # @rbs &: ? (Integer) -> Integer
           # @rbs return: void
