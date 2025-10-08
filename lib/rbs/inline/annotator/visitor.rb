@@ -432,7 +432,18 @@ module RBS::Inline::Annotator
           warn "Unsupported node: #{node.value.class}"
         end
       when RBS::Environment::ConstantEntry
-        entry.decl.type.to_s
+        t = entry.decl.type.to_s
+        if (node.value.is_a?(Prism::IntegerNode) && t == "Integer" ||
+            node.value.is_a?(Prism::FloatNode) && t == "Float" ||
+            node.value.is_a?(Prism::TrueNode) && t == "bool" ||
+            node.value.is_a?(Prism::FalseNode) && t == "bool" ||
+            node.value.is_a?(Prism::StringNode) && t == "String" ||
+            node.value.is_a?(Prism::SymbolNode) && t == ":#{node.value.value}")
+          # The types of constants may be automatically inferred
+          nil
+        else
+          t
+        end
       end
     end
 
