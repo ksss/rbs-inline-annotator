@@ -18,12 +18,14 @@ module CLITest
         Constants::WritePath = Object.new
         ::Constants::AbsWritePath = Object.new
         ModuleAlias = Constants
+        ModuleAliasVar = constants
         ModuleAlias::Child = Constants::M
         class C
           class C2
           end
         end
         ClassAlias = C
+        ClassAliasVar = c
         ClassAlias::Child = C::C2
       RUBY
       (dir / "target.rbs").write(<<~RBS)
@@ -38,12 +40,14 @@ module CLITest
         Constants::WritePath: Object
         ::Constants::AbsWritePath: Object
         module ModuleAlias = Constants
+        module ModuleAliasVar = Constants
         module ModuleAlias::Child = Constants::M
         class C
           class C2
           end
         end
         class ClassAlias = C
+        class ClassAliasVar = C
         class ClassAlias::Child = C::C2
       RBS
       cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
@@ -61,12 +65,14 @@ module CLITest
         Constants::WritePath = Object.new #: Object
         ::Constants::AbsWritePath = Object.new #: Object
         ModuleAlias = Constants #: module-alias
+        ModuleAliasVar = constants #: module-alias Constants
         ModuleAlias::Child = Constants::M #: module-alias
         class C
           class C2
           end
         end
         ClassAlias = C #: class-alias
+        ClassAliasVar = c #: class-alias C
         ClassAlias::Child = C::C2 #: class-alias
       RUBY
       unless target.read == expected

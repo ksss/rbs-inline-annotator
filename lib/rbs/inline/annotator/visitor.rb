@@ -396,7 +396,7 @@ module RBS::Inline::Annotator
       constant_type_name = RBS::TypeName.parse(node.target.full_name).then do |c|
         type_name ? type_name + c : c.absolute!
       end
-      type = constant_type(constant_type_name) or return
+      type = constant_type(node, constant_type_name) or return
       add_rbs_inline_annotation_for_trailing(node:, type:)
     end
 
@@ -406,17 +406,31 @@ module RBS::Inline::Annotator
         name: node.name,
         namespace:
       )
-      type = constant_type(constant_type_name) or return
+      type = constant_type(node, constant_type_name) or return
       add_rbs_inline_annotation_for_trailing(node:, type:)
     end
 
-    def constant_type(type_name)
+    def constant_type(node, type_name)
       entry = @env.constant_entry(type_name) or return
       case entry
       when RBS::Environment::ModuleAliasEntry
-        "module-alias"
+        case node.value
+        when Prism::CallNode
+          "module-alias #{entry.decl.old_name}"
+        when Prism::ConstantReadNode, Prism::ConstantPathNode
+          "module-alias"
+        else
+          warn "Unsupported node: #{node.value.class}"
+        end
       when RBS::Environment::ClassAliasEntry
-        "class-alias"
+        case node.value
+        when Prism::CallNode
+          "class-alias #{entry.decl.old_name}"
+        when Prism::ConstantReadNode, Prism::ConstantPathNode
+          "class-alias"
+        else
+          warn "Unsupported node: #{node.value.class}"
+        end
       when RBS::Environment::ConstantEntry
         entry.decl.type.to_s
       end
