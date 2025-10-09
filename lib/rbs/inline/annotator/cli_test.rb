@@ -2,6 +2,27 @@ require "test_helper"
 require "tempfile"
 
 module CLITest
+  def test_no_change(t)
+    Dir.mktmpdir do |dir|
+      dir = Pathname(dir)
+      target = (dir / "target.rb")
+      target.write(<<~RUBY)
+        class Foo
+        end
+      RUBY
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli.run
+
+      expected = <<~RUBY
+        class Foo
+        end
+      RUBY
+      unless target.read == expected
+        t.error("target expected: \n```\n#{expected}```\n, but got:\n```\n#{target.read}```\n")
+      end
+    end
+  end
+
   def test_constants(t)
     Dir.mktmpdir do |dir|
       dir = Pathname(dir)
