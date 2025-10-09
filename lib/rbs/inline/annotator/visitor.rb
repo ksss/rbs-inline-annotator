@@ -312,6 +312,7 @@ module RBS::Inline::Annotator
                           (node.name == :attr_writer && member.is_a?(RBS::AST::Members::AttrWriter)) ||
                           (node.name == :attr_accessor && member.is_a?(RBS::AST::Members::AttrAccessor))
               next unless member.name == value.to_sym
+              next unless member.kind == @kind
 
               type = member.type.to_s
               next if type == "untyped"
@@ -331,6 +332,7 @@ module RBS::Inline::Annotator
                             (node.name == :attr_writer && member.is_a?(RBS::AST::Members::AttrWriter)) ||
                             (node.name == :attr_accessor && member.is_a?(RBS::AST::Members::AttrAccessor))
                 next unless member.name == value.to_sym
+                next unless member.kind == @kind
 
                 indent = replaced_count == 0 ? "" : " " * node.location.start_column
                 insert_before(node_range(node), "#{indent}#{node.name} :#{value} #: #{member.type}\n")

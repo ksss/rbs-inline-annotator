@@ -126,6 +126,9 @@ module CLITest
           attr_reader :a
           attr_accessor :b, :c, :d
           attr_writer :z
+          class << self
+            attr_reader :a
+          end
 
           %i[aaa bbb ccc].each do |name|
             attr_accessor name
@@ -139,6 +142,7 @@ module CLITest
           attr_accessor b: Integer
           attr_accessor c: Float
           attr_accessor d: untyped
+          attr_reader self.a: Object
         end
       RBS
       cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
@@ -151,6 +155,9 @@ module CLITest
           attr_accessor :c #: Float
           attr_accessor :d #: untyped
           attr_writer :z
+          class << self
+            attr_reader :a #: Object
+          end
 
           %i[aaa bbb ccc].each do |name|
             attr_accessor name
