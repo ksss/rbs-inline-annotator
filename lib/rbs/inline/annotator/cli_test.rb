@@ -437,6 +437,46 @@ module CLITest
     end
   end
 
+  def test_generics(t)
+    Dir.mktmpdir do |dir|
+      dir = Pathname(dir)
+      target = dir / "sample.rb"
+      target.write(<<~RUBY)
+        module N
+          class Foo
+          end
+          module Bar
+          end
+        end
+      RUBY
+      (dir / "sample.rbs").write(<<~RBS)
+        module N
+          class Foo[A, unchecked in B < String]
+          end
+          module Bar[T]
+          end
+        end
+      RBS
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli.run
+
+      expected = <<~RUBY
+        module N
+          # @rbs generic A
+          # @rbs generic unchecked in B < String
+          class Foo
+          end
+          # @rbs generic T
+          module Bar
+          end
+        end
+      RUBY
+      unless target.read == expected
+        t.error("target expected: \n```\n#{expected}```\n, but got:\n```\n#{target.read}```\n")
+      end
+    end
+  end
+
   def test_write(t)
     Dir.mktmpdir do |dir|
       dir = Pathname(dir)

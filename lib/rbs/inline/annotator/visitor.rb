@@ -49,6 +49,7 @@ module RBS::Inline::Annotator
 
     def visit_class_node(node)
       push_type_name(node) do
+        with_generics(node)
         with_superclass(node.superclass)
         # TODO: Which file should we write to?
         # with_embedding_rbs(header_node(node), node)
@@ -59,11 +60,20 @@ module RBS::Inline::Annotator
 
     def visit_module_node(node)
       push_type_name(node) do
+        with_generics(node)
         with_module_self(node)
         # TODO: Which file should we write to?
         # with_embedding_rbs(header_node(node), node)
         # with_variables(header_node(node), node)
         visit_child_nodes(node)
+      end
+    end
+
+    def with_generics(node)
+      entry = module_class_entry or return
+      indent = " " * node.location.start_column
+      entry.primary_decl.type_params.each do |type_param|
+        insert_before(node_range(node), "# @rbs generic #{type_param}\n#{indent}")
       end
     end
 
