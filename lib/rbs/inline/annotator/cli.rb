@@ -52,10 +52,10 @@ module RBS::Inline::Annotator
       Spinner.new.tap do |spinner|
         print "\e[?25l" if @options.mode == 'write'
         targets.each do |target|
-          annotated_code = Processor.new(target:, env:).process
+          annotated_code, changed = Processor.new(target:, env:).process
           case @options.mode
           when 'write'
-            File.write(target, annotated_code)
+            File.write(target, annotated_code) if changed
           when 'print-only'
             puts annotated_code
           when 'quiet'

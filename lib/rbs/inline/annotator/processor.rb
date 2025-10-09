@@ -17,15 +17,18 @@ module RBS::Inline::Annotator
       @env = env
     end
 
+    # @rbs return: [String, bool] -- [code string, changed flag]
     def process
       absolute_path = Pathname.pwd + target
       source = absolute_path.read
       writer = Writer.new(source)
       result = Result.new(writer:, prism_result: Prism.parse_file(absolute_path.to_s))
       result.prism_result.value.accept(Visitor.new(env:, result:))
-      return if result.writer.actions.empty?
-
-      writer.process
+      if result.writer.actions.empty?
+        [source, false]
+      else
+        [writer.process, true]
+      end
     end
   end
 end
