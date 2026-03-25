@@ -232,7 +232,7 @@ module CLITest
 
       ## doc style
       cli = RBS::Inline::Annotator::CLI.new(["--mode", "print-only", "--style", "doc", "-I", dir.to_s, target.to_s])
-      actual, err = capture { cli.run }
+      actual, _ = capture { cli.run }
       expected = <<~RUBY
         class Methods
           # @rbs req: Integer
@@ -292,7 +292,7 @@ module CLITest
 
       ## method_type style
       cli = RBS::Inline::Annotator::CLI.new(["--mode", "print-only", "--style", "method_type", "-I", dir.to_s, target.to_s])
-      actual, err = capture { cli.run }
+      actual, _ = capture { cli.run }
       expected = <<~RUBY
         class Methods
           # @rbs (Integer, ?Integer, *Integer, Integer, key: Integer, ?keyopt: Integer, **Integer) -> Rational
@@ -340,7 +340,7 @@ module CLITest
 
       ## colon style
       cli = RBS::Inline::Annotator::CLI.new(["--mode", "print-only", "--style", "colon", "-I", dir.to_s, target.to_s])
-      actual, err = capture { cli.run }
+      actual, _ = capture { cli.run }
       expected = <<~RUBY
         class Methods
           #: (Integer, ?Integer, *Integer, Integer, key: Integer, ?keyopt: Integer, **Integer) -> Rational
@@ -651,7 +651,7 @@ module CLITest
         end
       RBS
       cli = RBS::Inline::Annotator::CLI.new(["--mode", "print-only", "-I", dir.to_s, target.to_s])
-      out, err = capture { cli.run }
+      out, _ = capture { cli.run }
       expected = <<~RUBY
         class Foo
           # @rbs return: void

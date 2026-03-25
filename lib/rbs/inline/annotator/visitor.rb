@@ -212,13 +212,13 @@ module RBS::Inline::Annotator
 
       method_definition.overloads.each_with_index do |overload, index|
         text = if index == 0
-          " #{overload.method_type}"
-        else
-          "\n#{indent}#    | #{overload.method_type}"
-        end
+                 " #{overload.method_type}"
+               else
+                 "\n#{indent}#    | #{overload.method_type}"
+               end
         insert_before(node_range(node), text)
       end
- 
+
       if method_definition.overloading
         if method_definition.overloads.any?
           insert_before(node_range(node), " | ...")
@@ -241,13 +241,13 @@ module RBS::Inline::Annotator
 
       method_definition.overloads.each_with_index do |overload, index|
         text = if index == 0
-          " #{overload.method_type}"
-        else
-          "\n#{indent}#: #{overload.method_type}"
-        end
+                 " #{overload.method_type}"
+               else
+                 "\n#{indent}#: #{overload.method_type}"
+               end
         insert_before(node_range(node), text)
       end
- 
+
       if method_definition.overloading
         if method_definition.overloads.any?
           insert_before(node_range(node), " | ...")

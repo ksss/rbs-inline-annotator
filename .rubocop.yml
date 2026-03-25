@@ -9,5 +9,7 @@ Layout/HeredocIndentation:
   Enabled: false
 Layout/LeadingCommentSpace:
   AllowRBSInlineAnnotation: true
+Layout/LineLength:
+  Max: 140
 Naming/MethodParameterName:
   Enabled: false
