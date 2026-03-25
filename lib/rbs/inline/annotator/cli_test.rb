@@ -145,7 +145,7 @@ module CLITest
           attr_reader self.a: Object
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -230,9 +230,9 @@ module CLITest
         end
       RBS
 
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
-      cli.run
-
+      ## doc style
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "print-only", "--style", "doc", "-I", dir.to_s, target.to_s])
+      actual, _ = capture { cli.run }
       expected = <<~RUBY
         class Methods
           # @rbs req: Integer
@@ -286,8 +286,104 @@ module CLITest
           end
         end
       RUBY
-      unless target.read == expected
-        t.error("target expected: \n```\n#{expected}```\n, but got:\n```\n#{target.read}```\n")
+      unless actual == expected
+        t.error("target expected: \n```\n#{expected}```\n, but got:\n```\n#{actual}```\n")
+      end
+
+      ## method_type style
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "print-only", "--style", "method_type", "-I", dir.to_s, target.to_s])
+      actual, _ = capture { cli.run }
+      expected = <<~RUBY
+        class Methods
+          # @rbs (Integer, ?Integer, *Integer, Integer, key: Integer, ?keyopt: Integer, **Integer) -> Rational
+          def foo(req, opt = nil, *rest, post, key:, keyopt: nil, **keyrest)
+          end
+
+          # @rbs () -> Integer
+          #    | (Integer) -> Integer
+          def bar(a = 0)
+          end
+
+          # @rbs (?) -> Integer
+          def dot3(...)
+          end
+
+          # @rbs () -> Integer
+          def endless = 1
+
+          # @rbs () ?{ (Integer) -> Integer } -> void
+          def block
+          end
+
+          # @rbs ...
+          def override
+          end
+
+          # @rbs %a{pure} %a{deprecated} () -> void
+          def annotation
+          end
+
+          # @rbs (Integer) -> Integer
+          def self.foo(a)
+          end
+
+          class << self
+            # @rbs (Integer) -> Integer
+            def bar(a)
+            end
+          end
+        end
+      RUBY
+      unless actual == expected
+        t.error("target expected: \n```\n#{expected}```\n, but got:\n```\n#{actual}```\n")
+      end
+
+      ## colon style
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "print-only", "--style", "colon", "-I", dir.to_s, target.to_s])
+      actual, _ = capture { cli.run }
+      expected = <<~RUBY
+        class Methods
+          #: (Integer, ?Integer, *Integer, Integer, key: Integer, ?keyopt: Integer, **Integer) -> Rational
+          def foo(req, opt = nil, *rest, post, key:, keyopt: nil, **keyrest)
+          end
+
+          #: () -> Integer
+          #: (Integer) -> Integer
+          def bar(a = 0)
+          end
+
+          #: (?) -> Integer
+          def dot3(...)
+          end
+
+          #: () -> Integer
+          def endless = 1
+
+          #: () ?{ (Integer) -> Integer } -> void
+          def block
+          end
+
+          #: ...
+          def override
+          end
+
+          #: %a{pure} %a{deprecated} () -> void
+          def annotation
+          end
+
+          #: (Integer) -> Integer
+          def self.foo(a)
+          end
+
+          class << self
+            #: (Integer) -> Integer
+            def bar(a)
+            end
+          end
+        end
+      RUBY
+      unless actual == expected
+        t.error("target expected: \n```\n#{expected}```\n, but got:\n```\n#{actual}```\n")
       end
     end
   end
@@ -310,7 +406,7 @@ module CLITest
           extend Three[A,B,C]
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -345,7 +441,7 @@ module CLITest
         class H < Hash[Symbol, String]
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -377,7 +473,7 @@ module CLITest
           end
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -414,7 +510,7 @@ module CLITest
         end
       RBS
 
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -448,7 +544,7 @@ module CLITest
           def bar: () -> void
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -485,7 +581,7 @@ module CLITest
           end
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -520,7 +616,7 @@ module CLITest
           def bar: (Integer) -> void
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       capture do
         cli.run
       end
@@ -554,20 +650,17 @@ module CLITest
           def bar: () -> void
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "print-only", "-I", dir.to_s, target.to_s])
-      capture do
-        cli.run
-
-        expected = <<~RUBY
-          class Foo
-            # @rbs return: void
-            def bar
-            end
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "print-only", "--style", "doc", "-I", dir.to_s, target.to_s])
+      out, _ = capture { cli.run }
+      expected = <<~RUBY
+        class Foo
+          # @rbs return: void
+          def bar
           end
-        RUBY
-        unless $stdout.string == expected
-          t.error("stdout expected: \n```\n#{expected}```\n, but got:\n```\n#{$stdout.string}```\n")
         end
+      RUBY
+      unless out == expected
+        t.error("stdout expected: \n```\n#{expected}```\n, but got:\n```\n#{out}```\n")
       end
     end
   end
@@ -582,16 +675,13 @@ module CLITest
       RUBY
       file.close
       target = file.path
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "quiet", target])
-      capture do
-        cli.run
-
-        unless $stdout.string.empty?
-          t.error("stdout should be quiet, but got: \"#{$stdout.string.inspect}\"")
-        end
-        unless $stderr.string.empty?
-          t.error("stderr should be quiet, but got: \"#{$stderr.string.inspect}\"")
-        end
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "quiet", "--style", "doc", target])
+      out, err = capture { cli.run }
+      unless out.empty?
+        t.error("stdout should be quiet, but got: \"#{out.inspect}\"")
+      end
+      unless err.empty?
+        t.error("stderr should be quiet, but got: \"#{err.inspect}\"")
       end
     end
   end
@@ -604,6 +694,7 @@ module CLITest
     $stdout = StringIO.new
     $stderr = StringIO.new
     yield
+    [$stdout.string, $stderr.string]
   ensure
     $stdout = orig_stdout
     $stderr = orig_stderr

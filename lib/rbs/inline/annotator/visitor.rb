@@ -1,8 +1,9 @@
 module RBS::Inline::Annotator
   class Visitor < Prism::Visitor
-    def initialize(env:, result:)
+    def initialize(env:, result:, style:)
       @env = env
       @result = result
+      @style = style
       @stack = []
       @kind = :instance
       super()
@@ -186,6 +187,79 @@ module RBS::Inline::Annotator
     def add_rbs_inline_annotation_for_def_node(node:, method_definition:)
       indent = " " * node.location.start_column
 
+      case @style
+      when 'method_type'
+        annotate_method_type(node, method_definition, indent)
+      when 'colon'
+        annotate_colon(node, method_definition, indent)
+      when 'doc'
+        if method_definition.overloads.length > 1
+          annotate_method_type(node, method_definition, indent)
+        else
+          annotate_doc(node, method_definition, indent)
+        end
+      end
+    end
+
+    def annotate_method_type(node, method_definition, indent)
+      insert_before(node_range(node), "# @rbs")
+
+      if method_definition.annotations.any?
+        method_definition.annotations.each do |a|
+          insert_before(node_range(node), " %a{#{a.string}}")
+        end
+      end
+
+      method_definition.overloads.each_with_index do |overload, index|
+        text = if index == 0
+                 " #{overload.method_type}"
+               else
+                 "\n#{indent}#    | #{overload.method_type}"
+               end
+        insert_before(node_range(node), text)
+      end
+
+      if method_definition.overloading
+        if method_definition.overloads.any?
+          insert_before(node_range(node), " | ...")
+        else
+          insert_before(node_range(node), " ...")
+        end
+      end
+
+      insert_before(node_range(node), "\n#{indent}")
+    end
+
+    def annotate_colon(node, method_definition, indent)
+      insert_before(node_range(node), "#:")
+
+      if method_definition.annotations.any?
+        method_definition.annotations.each do |a|
+          insert_before(node_range(node), " %a{#{a.string}}")
+        end
+      end
+
+      method_definition.overloads.each_with_index do |overload, index|
+        text = if index == 0
+                 " #{overload.method_type}"
+               else
+                 "\n#{indent}#: #{overload.method_type}"
+               end
+        insert_before(node_range(node), text)
+      end
+
+      if method_definition.overloading
+        if method_definition.overloads.any?
+          insert_before(node_range(node), " | ...")
+        else
+          insert_before(node_range(node), " ...")
+        end
+      end
+
+      insert_before(node_range(node), "\n#{indent}")
+    end
+
+    def annotate_doc(node, method_definition, indent)
       if method_definition.annotations.any?
         method_definition.annotations.each do |a|
           insert_before(node_range(node), "# @rbs %a{#{a.string}}\n#{indent}")
@@ -197,94 +271,81 @@ module RBS::Inline::Annotator
         return
       end
 
-      if method_definition.overloads.length > 1
-        # multiple overloads
-        method_definition.overloads.each_with_index do |overload, index|
-          text = if index == 0
-                   "# @rbs #{overload.method_type}\n#{indent}"
-                 else
-                   "#    | #{overload.method_type}\n#{indent}"
-                 end
-
-          insert_before(node_range(node), text)
-        end
-      else
-        overload = method_definition.overloads.first
-        method_type = overload.method_type
-        func = method_type.type
-        indent = " " * node.location.start_column
-        new_annotation = lambda { |name, type|
-          insert_before(node_range(node), "# @rbs #{name}: #{type}\n#{indent}")
-        }
-        for_positional_params = lambda { |orig_sig, orig_ruby|
-          sig = orig_sig.dup or break
-          ruby = orig_ruby.dup or break
-          sig.each do |rbs|
-            rb = ruby.shift
-            if rbs.name
-              name = rbs.name
-            else
-              if rb.nil?
-                s = (node.receiver.is_a?(Prism::SelfNode) || @kind == :singleton) ? "." : "#"
-                warn "Parameter mismatch #{type_name}#{s}#{node.name}"
-                break
-              end
-              name = rb.name
+      overload = method_definition.overloads.first
+      method_type = overload.method_type
+      func = method_type.type
+      indent = " " * node.location.start_column
+      new_annotation = lambda { |name, type|
+        insert_before(node_range(node), "# @rbs #{name}: #{type}\n#{indent}")
+      }
+      for_positional_params = lambda { |orig_sig, orig_ruby|
+        sig = orig_sig.dup or break
+        ruby = orig_ruby.dup or break
+        sig.each do |rbs|
+          rb = ruby.shift
+          if rbs.name
+            name = rbs.name
+          else
+            if rb.nil?
+              s = (node.receiver.is_a?(Prism::SelfNode) || @kind == :singleton) ? "." : "#"
+              warn "Parameter mismatch #{type_name}#{s}#{node.name}"
+              break
             end
-
-            type = rbs.type.to_s
-            next if type == "untyped"
-
-            new_annotation.call(name, type)
+            name = rb.name
           end
-        }
-        for_keyword_params = lambda { |orig_sig, _orig_ruby|
-          sig = orig_sig.dup or break
-          # ruby = orig_ruby.dup or break
-          sig.each do |name, param|
-            type = param.type.to_s
-            next if type == "untyped"
 
-            new_annotation.call(name, type)
-          end
-        }
-        for_rest_param = lambda { |prefix, sig, ruby|
-          name = sig.name || ruby.name
-          type = sig.type.to_s
+          type = rbs.type.to_s
           next if type == "untyped"
 
-          new_annotation.call("#{prefix}#{name}", type)
-        }
-        for_return_param = lambda { |return_type|
-          return_type = return_type.to_s
-          break if return_type == "untyped"
+          new_annotation.call(name, type)
+        end
+      }
+      for_keyword_params = lambda { |orig_sig, _orig_ruby|
+        sig = orig_sig.dup or break
+        # ruby = orig_ruby.dup or break
+        sig.each do |name, param|
+          type = param.type.to_s
+          next if type == "untyped"
 
-          new_annotation.call("return", return_type)
-        }
-        if node.parameters
-          case func
-          when RBS::Types::UntypedFunction
-            # do nothing
-          when RBS::Types::Function
-            for_positional_params.call(func.required_positionals, node.parameters.requireds)
-            for_positional_params.call(func.optional_positionals, node.parameters.optionals)
-            for_rest_param.call("*", func.rest_positionals, node.parameters.rest) if func.rest_positionals
-            for_positional_params.call(func.trailing_positionals, node.parameters.posts) if func.trailing_positionals
-            for_keyword_params.call(func.required_keywords, node.parameters.keywords.grep(Prism::RequiredKeywordParameterNode))
-            for_keyword_params.call(func.optional_keywords, node.parameters.keywords.grep(Prism::OptionalKeywordParameterNode))
-            for_rest_param.call("**", func.rest_keywords, node.parameters.keyword_rest) if func.rest_keywords
-          end
+          new_annotation.call(name, type)
         end
-        if method_type.block
-          name = node.parameters&.block&.name
-          block_source = method_type.block.location.source
-          # "?{ (Integer) -> Integer } -> void"
-          # -> "? (Integer) -> Integer"
-          block_source = block_source.gsub(/[{}]/, "").strip
-          new_annotation.call("&#{name}", block_source)
+      }
+      for_rest_param = lambda { |prefix, sig, ruby|
+        name = sig.name || ruby.name
+        type = sig.type.to_s
+        next if type == "untyped"
+
+        new_annotation.call("#{prefix}#{name}", type)
+      }
+      for_return_param = lambda { |return_type|
+        return_type = return_type.to_s
+        break if return_type == "untyped"
+
+        new_annotation.call("return", return_type)
+      }
+      if node.parameters
+        case func
+        when RBS::Types::UntypedFunction
+          # do nothing
+        when RBS::Types::Function
+          for_positional_params.call(func.required_positionals, node.parameters.requireds)
+          for_positional_params.call(func.optional_positionals, node.parameters.optionals)
+          for_rest_param.call("*", func.rest_positionals, node.parameters.rest) if func.rest_positionals
+          for_positional_params.call(func.trailing_positionals, node.parameters.posts) if func.trailing_positionals
+          for_keyword_params.call(func.required_keywords, node.parameters.keywords.grep(Prism::RequiredKeywordParameterNode))
+          for_keyword_params.call(func.optional_keywords, node.parameters.keywords.grep(Prism::OptionalKeywordParameterNode))
+          for_rest_param.call("**", func.rest_keywords, node.parameters.keyword_rest) if func.rest_keywords
         end
-        for_return_param.call(func.return_type)
       end
+      if method_type.block
+        name = node.parameters&.block&.name
+        block_source = method_type.block.location.source
+        # "?{ (Integer) -> Integer } -> void"
+        # -> "? (Integer) -> Integer"
+        block_source = block_source.gsub(/[{}]/, "").strip
+        new_annotation.call("&#{name}", block_source)
+      end
+      for_return_param.call(func.return_type)
     end
 
     def visit_call_node(node)

@@ -17,20 +17,26 @@ module RBS::Inline::Annotator
       end
     end
 
-    Options = Struct.new(:mode)
+    Options = Struct.new(:mode, :style)
+    MODE_LIST = %w[quiet print-only write].freeze
+    STYLE_LIST = %w[doc colon method_type].freeze
 
     def initialize(argv)
       @loader = RBS::EnvironmentLoader.new(core_root: nil)
       @argv = argv
       @options = Options.new(
-        mode: 'write'
+        mode: 'write',
+        style: nil,
       )
       OptionParser.new do |opt|
         opt.on("-I DIR", "Load RBS files from the directory") do |dir|
           @loader.add(path: Pathname(dir))
         end
-        opt.on("-m", "--mode MODE", "Mode [quiet, print-only, write] (default: write)") do |mode|
+        opt.on("-m", "--mode MODE", "Mode #{MODE_LIST} (default: write)", MODE_LIST) do |mode|
           @options.mode = mode
+        end
+        opt.on("--style STYLE", "Style of annotations #{STYLE_LIST}", STYLE_LIST) do |style|
+          @options.style = style
         end
       end.parse!(@argv)
     end
@@ -52,7 +58,7 @@ module RBS::Inline::Annotator
       Spinner.new.tap do |spinner|
         print "\e[?25l" if @options.mode == 'write'
         targets.each do |target|
-          annotated_code, changed = Processor.new(target:, env:).process
+          annotated_code, changed = Processor.new(target:, env:, style: @options.style).process
           case @options.mode
           when 'write'
             File.write(target, annotated_code) if changed

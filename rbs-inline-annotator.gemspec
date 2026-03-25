@@ -32,5 +32,5 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "prism"
-  spec.add_dependency "rbs", "~> 4.0.0.dev.4"
+  spec.add_dependency "rbs", ">= 4.0"
 end
