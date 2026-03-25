@@ -145,7 +145,7 @@ module CLITest
           attr_reader self.a: Object
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -406,7 +406,7 @@ module CLITest
           extend Three[A,B,C]
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -441,7 +441,7 @@ module CLITest
         class H < Hash[Symbol, String]
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -473,7 +473,7 @@ module CLITest
           end
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -510,7 +510,7 @@ module CLITest
         end
       RBS
 
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -544,7 +544,7 @@ module CLITest
           def bar: () -> void
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -581,7 +581,7 @@ module CLITest
           end
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       cli.run
 
       expected = <<~RUBY
@@ -616,7 +616,7 @@ module CLITest
           def bar: (Integer) -> void
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "write", "--style", "doc", "-I", dir.to_s, target.to_s])
       capture do
         cli.run
       end
@@ -650,7 +650,7 @@ module CLITest
           def bar: () -> void
         end
       RBS
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "print-only", "-I", dir.to_s, target.to_s])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "print-only", "--style", "doc", "-I", dir.to_s, target.to_s])
       out, _ = capture { cli.run }
       expected = <<~RUBY
         class Foo
@@ -675,7 +675,7 @@ module CLITest
       RUBY
       file.close
       target = file.path
-      cli = RBS::Inline::Annotator::CLI.new(["--mode", "quiet", target])
+      cli = RBS::Inline::Annotator::CLI.new(["--mode", "quiet", "--style", "doc", target])
       out, err = capture { cli.run }
       unless out.empty?
         t.error("stdout should be quiet, but got: \"#{out.inspect}\"")
