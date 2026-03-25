@@ -10,11 +10,12 @@ module RBS::Inline::Annotator
       end
     end
 
-    attr_reader :target, :env
+    attr_reader :target, :env, :style
 
-    def initialize(target:, env:)
+    def initialize(target:, env:, style:)
       @target = target
       @env = env
+      @style = style
     end
 
     # @rbs return: [String, bool] -- [code string, changed flag]
@@ -23,7 +24,7 @@ module RBS::Inline::Annotator
       source = absolute_path.read
       writer = Writer.new(source)
       result = Result.new(writer:, prism_result: Prism.parse_file(absolute_path.to_s))
-      result.prism_result.value.accept(Visitor.new(env:, result:))
+      result.prism_result.value.accept(Visitor.new(env:, result:, style:))
       if result.writer.actions.empty?
         [source, false]
       else
